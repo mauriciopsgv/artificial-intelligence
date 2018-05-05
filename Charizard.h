@@ -42,4 +42,8 @@ protected:
 	{
 		return op1.first < op2.first;
 	}
+
+	void firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItems);
+
+	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItems);
 };

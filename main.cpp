@@ -31,6 +31,8 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 	input.close();
 }
 
+
+
 int main(void)
 {
 	int binCapacity;
@@ -38,5 +40,8 @@ int main(void)
 
 	loadFromFile(std::string("Falkenauer_t60_00.txt"),weights,binCapacity);
 	Charizard falkenauer_t69_00(weights, binCapacity);
+	CharizardSolution bestSolution = falkenauer_t69_00.execute();
+
+
 	system("pause");
 }

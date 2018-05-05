@@ -1,7 +1,7 @@
 #include "Charizard.h"
+#include <concurrent_priority_queue.h>
 
 #define EVALUATION_CONSTANT 3.0
-
 
 
 Charizard::Charizard(std::vector<int> weights, int binCapacity)
@@ -38,8 +38,10 @@ CharizardSolution Charizard::execute()
 			// Mutation comes here
 			offspring.emplace_back(evaluate(individual),individual);
 		}
-		std::sort_heap(offspring.begin(), offspring.end());
+		_population = offspring;
 	}
+
+	std::sort_heap(_population.begin(), _population.end());
 	return _population[0].second;
 }
 
@@ -60,6 +62,15 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 CharizardSolution Charizard::crossover(std::pair<CharizardSolution, CharizardSolution> parents)
 {
 	// refer to https://www.codeproject.com/Articles/633133/ga-bin-packing
+
+	// initially selects two ranges in both parents
+	// insert these guys in the other's 
+
+	// pop original parents bins with repetition of what has been inserted
+
+	// use replacement to further improve descendant's fitness
+	// firstfitDescendingHeuristic used to make sure solutions are now valid
+	// return offspring
 	return CharizardSolution();
 }
 
@@ -88,5 +99,16 @@ float Charizard::evaluate(CharizardSolution individual)
 
 bool Charizard::algorithmHasConverged()
 {
+	// Stop Criteria: number of generations without improvements
 	return false;
+}
+
+void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItems)
+{
+	// Should take the unasignedItems and place them in solution bins following the given heuristic
+}
+
+void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItems)
+{
+	// Tries to insert according to the replacement method
 }
