@@ -1,33 +1,14 @@
 #pragma once
 #include <vector>
+#include <iostream>
 
 struct Bin {
 	std::vector<int> weightIds;
 };
 
-std::ostream& operator<<(std::ostream& os, const Bin& obj)
-{
-	os << "[ ";
-	for (int weightId : obj.weightIds)
-	{
-		os << weightId << " ";
-	}
-	os << "]";
-	return os;
-}
-
 struct CharizardSolution {
 	std::vector<Bin> genes;
 };
-
-std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj)
-{
-	for (Bin gene : obj.genes)
-	{
-		os << gene << std::endl;
-	}
-	return os;
-}
 
 class Charizard {
 public:
@@ -40,9 +21,13 @@ public:
 
 	void testFirstFitHeuristic();
 
+	void testMutate();
+
 	void testCrossover();
 
-	void testSelectParensts();
+	void testSelectParents();
+
+	void testEvaluate();
 
 protected:
 
@@ -61,6 +46,8 @@ protected:
 	int _binCapacity;
 
 	float last;
+
+	double _totalFitness;
 
 	// May be changed to a static container
 	std::vector<int> _weights;

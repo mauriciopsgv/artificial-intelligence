@@ -7,7 +7,7 @@
 void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapacity)
 {
 	std::ifstream input;
-	int numOfElements, binCapacity;
+	int numOfElements;
 	input.open(fileName);
 	if (!input.is_open())
 	{
@@ -26,7 +26,7 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 		input >> weight;
 		weights.push_back(weight);
 		std::cout << weight << std::endl;
-		std::cout << "Quantidade lida: " << (float)i / numOfElements * 100 << "%" << std::endl;
+		std::cout << "Quantidade lida: " << (float)(i+1) / numOfElements * 100 << "%" << std::endl;
 	}
 	input.close();
 }
@@ -39,8 +39,12 @@ int main(void)
 	std::vector<int> weights;
 
 	loadFromFile(std::string("Falkenauer_t60_00.txt"),weights,binCapacity);
-	Charizard falkenauer_t69_00(weights, binCapacity);
-	CharizardSolution bestSolution = falkenauer_t69_00.execute();
 
+	Charizard falkenauer_t60_00(weights, binCapacity);
+	//CharizardSolution bestSolution = falkenauer_t69_00.execute();
+	//falkenauer_t60_00.testFirstFitHeuristic();
+	//falkenauer_t60_00.testEvaluate();
+	//falkenauer_t60_00.testMutate();
+	falkenauer_t60_00.testSelectParents();
 	system("pause");
 }
