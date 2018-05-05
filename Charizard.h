@@ -1,6 +1,5 @@
 #pragma once
-
-#include "GeneticAlgorithm.h"
+#include <vector>
 
 struct Bin {
 	std::vector<int> weightIds;
