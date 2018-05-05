@@ -16,10 +16,18 @@ Bulbasaur::Bulbasaur(int binSize, int populationSize, int numberOfGenerations, f
 Bulbasaur::~Bulbasaur() {
 }
 
-std::pair<BulbasaurSolution,BulbasaurSolution> Bulbasaur::parentSelection() {
+int compare(const void * a, const void * b) {
+	BulbasaurSolution solutionA = *((BulbasaurSolution*)a);
+	BulbasaurSolution solutionB = *((BulbasaurSolution*)b);
+	return solutionA.fitnessValue - solutionB.fitnessValue;
+}
+
+std::vector<BulbasaurSolution> Bulbasaur::parentSelection() {
+	std::vector<BulbasaurSolution> parents;
 	for (int i = 0; i < currentSolutions_.size(); i++) {
 		
 	}
+	return parents;
 }
 
 BulbasaurSolution Bulbasaur::crossover() {

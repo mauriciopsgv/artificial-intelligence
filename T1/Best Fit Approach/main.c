@@ -3,6 +3,20 @@
 
 #include "binpacking.h"
 
+void printSolution(Bin * bins, int countBin) {
+	int debugIndex, debugPesosIndex;
+	for (debugIndex = 0; debugIndex < countBin; debugIndex++) {
+		printf("Bin numero %d\n", debugIndex);
+		printf("fullness = %d\n", bins[debugIndex].fullness);
+		printf("pesos = { ");
+		for (debugPesosIndex = 0; debugPesosIndex < bins[debugIndex].qtditens; debugPesosIndex++) {
+			printf("%d ", bins[debugIndex].pesos[debugPesosIndex]);
+		}
+		printf("}\n");
+		printf("qndItens = %d\n\n", bins[debugIndex].qtditens);
+	}
+}
+
 int main(void) {
 	int n;				/*numero de items*/
 	int i = 0;			/*indice*/
@@ -41,19 +55,12 @@ int main(void) {
 	}
 
 	countBin = binPacking(array_pesos, cap, n, bins);
+	printSolution(bins, countBin);
 	bins = hillClimbing(bins, cap, countBin);
 	array_pesos = set_weight_array(bins, n, countBin);
 	countBin = binPacking(array_pesos, cap, n, bins);
 
 	printf("Numero minimo de bins: %d\n", countBin);
-
-	/*debug*/
-	/*for (i = 0; i < n; i++) {
-		for (j = 0; j < bins[i].qtditens; j++) {
-			printf("%d ", bins[i].pesos[j]);
-		}
-		printf("\n");
-	}*/
 
 	return 0;
 }

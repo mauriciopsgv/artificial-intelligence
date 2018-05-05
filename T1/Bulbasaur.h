@@ -19,7 +19,7 @@ private:
 
 	std::vector<BulbasaurSolution> currentSolutions_;
 
-	std::pair<BulbasaurSolution,BulbasaurSolution> parentSelection();
+	std::vector<BulbasaurSolution> parentSelection();
 
 	BulbasaurSolution crossover();
 
