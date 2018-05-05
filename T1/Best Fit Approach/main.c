@@ -56,9 +56,12 @@ int main(void) {
 
 	countBin = binPacking(array_pesos, cap, n, bins);
 	printSolution(bins, countBin);
-	bins = hillClimbing(bins, cap, countBin);
+	bins = hillClimbing(bins, cap, countBin, n);
 	array_pesos = set_weight_array(bins, n, countBin);
+
 	countBin = binPacking(array_pesos, cap, n, bins);
+
+	//printSolution(bins, countBin);
 
 	printf("Numero minimo de bins: %d\n", countBin);
 

@@ -6,6 +6,20 @@
 #include <time.h>
 #include "binpacking.h"
 
+void printSolutionT(Bin * bins, int countBin) {
+	int debugIndex, debugPesosIndex;
+	for (debugIndex = 0; debugIndex < countBin; debugIndex++) {
+		printf("Bin numero %d\n", debugIndex);
+		printf("fullness = %d\n", bins[debugIndex].fullness);
+		printf("pesos = { ");
+		for (debugPesosIndex = 0; debugPesosIndex < bins[debugIndex].qtditens; debugPesosIndex++) {
+			printf("%d ", bins[debugIndex].pesos[debugPesosIndex]);
+		}
+		printf("}\n");
+		printf("qndItens = %d\n\n", bins[debugIndex].qtditens);
+	}
+}
+
 int binPacking(int *original_items, int cap, int n, Bin *bins) {
 	int contBin = 1, item_index, bin_index = 0, k;
 	int currentBinSize = 0;
@@ -43,79 +57,108 @@ int binPacking(int *original_items, int cap, int n, Bin *bins) {
 
 	return contBin;
 }
-int fitness(Bin *bins, int cap, int contBin) {
-	int sum = 0;
+
+float fitness(Bin *bins, int cap, int contBin) {
+	float sum = 0.0;
 	int i;
 
 	for (i = 1; i < contBin; i++)
-		sum += (bins[i].fullness / cap) * (bins[i].fullness / cap);
+		sum += (bins[i].fullness / (float) cap) * (bins[i].fullness / (float) cap);
 
 	return 1 - (sum / contBin);
 }
-Bin * hillClimbing(Bin * inicial, int cap, int countBin) {
-	Bin * tmp = inicial;
-	int i;
 
-	int f1, f2;
+void copyBins(Bin * from, Bin * to, int countBin) {
+	int i = 0;
+	int j = 0;
+	for (i = 0; i < countBin; i++) {
+		to[i] = *(Bin*)malloc(sizeof(Bin));
+		to[i].fullness = from[i].fullness;
+		to[i].qtditens = from[i].qtditens;
+		to[i].pesos = (int*)malloc(to[i].qtditens * sizeof(int));
+		for (j = 0; j < to[i].qtditens; j++) {
+			to[i].pesos[j] = from[i].pesos[j];
+		}
+	}
+}
+
+Bin * hillClimbing(Bin * inicial, int cap, int countBin, int numberOfItems) {
+	int i;
+	float f1, f2;
 	int criterio_de_parada = 0;
 
-	while (criterio_de_parada < 15) {
+	Bin * tmp = (Bin*)malloc(countBin * sizeof(Bin));
+	copyBins(inicial, tmp, countBin);
+
+	while (criterio_de_parada < 240) {
 		tmp = swap(tmp, cap, countBin);
 
 		f1 = fitness(inicial, cap, countBin);
 		f2 = fitness(tmp, cap, countBin);
 
 		if (f2 < f1) {
-			inicial = tmp;
+			copyBins(tmp, inicial, countBin);
 			criterio_de_parada = 0;
 		}
 		else
 			criterio_de_parada++;
-		
-		if (criterio_de_parada % 5 == 0 &&
-			criterio_de_parada > 0) {
-			printf("criterio de parada atual = %d\n", criterio_de_parada);
-		}
 	}
+	free(tmp);
 	return inicial;
 }
+
 Bin * swap(Bin * new_bin, int cap, int countBin) {
-	int r1, r2;	/*valores aleatorios*/
-	int p1, p2;
+	int randomBin1, randomBin2;	/*valores aleatorios*/
+	int randomWeight1, randomWeight2;
 	int peso_aux;
+	int swapped = 0;
 
 	srand(time(NULL));
 
-	r1 = rand() % countBin;
-	r2 = rand() % countBin;
+	while (!swapped) {
+		randomBin1 = rand() % countBin;
+		randomBin2 = rand() % countBin;
 
-	p1 = rand() % new_bin[r1].qtditens;
-	p2 = rand() % new_bin[r2].qtditens;
+		randomWeight1 = rand() % new_bin[randomBin1].qtditens;
+		randomWeight2 = rand() % new_bin[randomBin2].qtditens;
 
 
-	new_bin[r1].fullness = new_bin[r1].fullness - new_bin[r1].pesos[p1] + new_bin[r2].pesos[p2];	/*compare*/
-	new_bin[r2].fullness = new_bin[r2].fullness - new_bin[r2].pesos[p2] + new_bin[r1].pesos[p1];
+		new_bin[randomBin1].fullness = new_bin[randomBin1].fullness - new_bin[randomBin1].pesos[randomWeight1] + new_bin[randomBin2].pesos[randomWeight2];	/*compare*/
+		new_bin[randomBin2].fullness = new_bin[randomBin2].fullness - new_bin[randomBin2].pesos[randomWeight2] + new_bin[randomBin1].pesos[randomWeight1];
 
-	if (new_bin[r1].fullness <= cap && new_bin[r2].fullness <= cap) {
-		peso_aux = new_bin[r1].pesos[p1];
-		new_bin[r1].pesos[p1] = new_bin[r2].pesos[p2];	/*swap*/
-		new_bin[r2].pesos[p2] = peso_aux;
-	}
-	else {
-		new_bin[r1].fullness = new_bin[r1].fullness + new_bin[r1].pesos[p1] - new_bin[r2].pesos[p2];	/*undo*/
-		new_bin[r2].fullness = new_bin[r2].fullness + new_bin[r2].pesos[p2] - new_bin[r1].pesos[p1];
+		if (new_bin[randomBin1].fullness <= cap && new_bin[randomBin2].fullness <= cap) {
+			peso_aux = new_bin[randomBin1].pesos[randomWeight1];
+			new_bin[randomBin1].pesos[randomWeight1] = new_bin[randomBin2].pesos[randomWeight2];	/*swap*/
+			new_bin[randomBin2].pesos[randomWeight2] = peso_aux;
+			swapped = 1;
+		}
+		else {
+			new_bin[randomBin1].fullness = new_bin[randomBin1].fullness + new_bin[randomBin1].pesos[randomWeight1] - new_bin[randomBin2].pesos[randomWeight2];	/*undo*/
+			new_bin[randomBin2].fullness = new_bin[randomBin2].fullness + new_bin[randomBin2].pesos[randomWeight2] - new_bin[randomBin1].pesos[randomWeight1];
+		}
 	}
 
 	return new_bin;
 }
+
+int compare(const void * a, const void * b) {
+	Bin t = *(Bin*)a;
+	Bin s = *(Bin*)b;
+	return s.fullness - t.fullness;
+}
+
+
 int * set_weight_array(Bin * bins, int n, int countBin) {
 	int i, j, k;
 	int * vetor_pesos = (int*)malloc(n * sizeof(int));
-	for (i = 0; i < n; i++) {
-		for (j = 0; j < countBin; j++) {
-			for (k = 0; k < bins[j].qtditens; k++)
-				vetor_pesos[i] = bins[j].pesos[k];
+	i = 0;
+	qsort(bins, countBin, sizeof(Bin), compare);
+	for (j = 0; j < countBin; j++) {
+		for (k = 0; k < bins[j].qtditens; k++) {
+			vetor_pesos[i] = bins[j].pesos[k];
+			i++;
 		}
 	}
+	
 	return vetor_pesos;
 }
