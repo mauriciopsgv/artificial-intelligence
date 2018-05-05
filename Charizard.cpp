@@ -39,9 +39,8 @@ CharizardSolution Charizard::execute()
 			offspring.emplace_back(evaluate(individual),individual);
 		}
 		_population = offspring;
+		std::sort_heap(_population.begin(), _population.end());
 	}
-
-	std::sort_heap(_population.begin(), _population.end());
 	return _population[0].second;
 }
 
@@ -56,6 +55,9 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 	for (auto i : _population)
 		totalFitnessValue += i.first;
 	// Generate a number between 0 and 1 and find the parent that occupies its position
+
+
+
 	return std::pair<CharizardSolution, CharizardSolution>();
 }
 
@@ -83,17 +85,11 @@ CharizardSolution Charizard::mutate(CharizardSolution individual)
 float Charizard::evaluate(CharizardSolution individual)
 {
 	double sum = 0.0;
-	for (unsigned int i = 0; i < individual.genes.size(); i++)
+	for (Bin gene : individual.genes)
 	{
-		double filling = 0.0;
-		Bin gene = individual.genes[i];
-		for (unsigned int j = 0; j < gene.weightIds.size(); j++)
-		{
-			int key = gene.weightIds[j];
-			filling += pow((double)_weights[key]/(double)_binCapacity, EVALUATION_CONSTANT);
-		}
-		sum += filling / individual.genes.size();
+		sum += pow((double)getBinFilling(gene) / (double)_binCapacity, EVALUATION_CONSTANT);
 	}
+	sum /= individual.genes.size();
 	return sum;
 }
 
@@ -103,12 +99,47 @@ bool Charizard::algorithmHasConverged()
 	return false;
 }
 
-void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItems)
+void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItemsIds)
 {
-	// Should take the unasignedItems and place them in solution bins following the given heuristic
+	// Places each unassigned item in the first bin that can hold it
+	for (int itemId : unassignedItemsIds)
+	{
+		bool hasFit = false;
+		for (Bin gene : invalidSolution.genes)
+		{
+			if (getBinFilling(gene) + _weights[itemId] <= _binCapacity)
+			{
+				gene.weightIds.push_back(itemId);
+				hasFit = true;
+				break;
+			}
+		}
+		if (!hasFit)
+		{
+			Bin newBin;
+			newBin.weightIds.push_back(itemId);
+			invalidSolution.genes.push_back(newBin);
+		}
+	}
 }
 
-void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItems)
+
+
+void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItemsIds)
 {
 	// Tries to insert according to the replacement method
+	for (Bin gene : invalidSolution.genes)
+	{
+
+	}
+}
+
+int Charizard::getBinFilling(Bin bin)
+{
+	int filling = 0;
+	for (int i : bin.weightIds)
+	{
+		filling += _weights[i];
+	}
+	return filling;
 }

@@ -42,6 +42,5 @@ int main(void)
 	Charizard falkenauer_t69_00(weights, binCapacity);
 	CharizardSolution bestSolution = falkenauer_t69_00.execute();
 
-
 	system("pause");
 }

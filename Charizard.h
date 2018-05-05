@@ -5,9 +5,29 @@ struct Bin {
 	std::vector<int> weightIds;
 };
 
+std::ostream& operator<<(std::ostream& os, const Bin& obj)
+{
+	os << "[ ";
+	for (int weightId : obj.weightIds)
+	{
+		os << weightId << " ";
+	}
+	os << "]";
+	return os;
+}
+
 struct CharizardSolution {
 	std::vector<Bin> genes;
 };
+
+std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj)
+{
+	for (Bin gene : obj.genes)
+	{
+		os << gene << std::endl;
+	}
+	return os;
+}
 
 class Charizard {
 public:
@@ -16,7 +36,16 @@ public:
 
 	CharizardSolution execute(/* verbose argument may be added in the future */);
 
+	void testReplacement();
+
+	void testFirstFitHeuristic();
+
+	void testCrossover();
+
+	void testSelectParensts();
+
 protected:
+
 	void generateInitialPopulation();
 
 	virtual std::pair<CharizardSolution, CharizardSolution> selectParents();
@@ -43,7 +72,9 @@ protected:
 		return op1.first < op2.first;
 	}
 
-	void firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItems);
+	void firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItemsIds);
 
-	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItems);
+	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItemsIds);
+
+	int getBinFilling(Bin bin);
 };
