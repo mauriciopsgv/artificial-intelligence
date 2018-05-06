@@ -62,7 +62,7 @@ float fitness(Bin *bins, int cap, int contBin) {
 	float sum = 0.0;
 	int i;
 
-	for (i = 1; i < contBin; i++)
+	for (i = 0; i < contBin; i++)
 		sum += (bins[i].fullness / (float) cap) * (bins[i].fullness / (float) cap);
 
 	return 1 - (sum / contBin);
@@ -71,6 +71,8 @@ float fitness(Bin *bins, int cap, int contBin) {
 void copyBins(Bin * from, Bin * to, int countBin) {
 	int i = 0;
 	int j = 0;
+	free(to);
+	to = (Bin*)malloc(countBin * sizeof(Bin));
 	for (i = 0; i < countBin; i++) {
 		to[i] = *(Bin*)malloc(sizeof(Bin));
 		to[i].fullness = from[i].fullness;
@@ -86,6 +88,7 @@ Bin * hillClimbing(Bin * inicial, int cap, int countBin, int numberOfItems) {
 	int i;
 	float f1, f2;
 	int criterio_de_parada = 0;
+	int trueSwaps = 0;
 
 	Bin * tmp = (Bin*)malloc(countBin * sizeof(Bin));
 	copyBins(inicial, tmp, countBin);
@@ -99,6 +102,7 @@ Bin * hillClimbing(Bin * inicial, int cap, int countBin, int numberOfItems) {
 		if (f2 < f1) {
 			copyBins(tmp, inicial, countBin);
 			criterio_de_parada = 0;
+			trueSwaps++;
 		}
 		else
 			criterio_de_parada++;
