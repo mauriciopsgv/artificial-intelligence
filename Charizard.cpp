@@ -215,10 +215,15 @@ void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, 
 void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItemsIds)
 {
 	// Tries to insert according to the replacement method
-	for (Bin gene : invalidSolution.genes)
+	for (int i = 0;i<(int)invalidSolution.genes.size();i++)
 	{
 
 	}
+}
+
+bool Charizard::replacement(Bin& target, int id)
+{
+
 }
 
 int Charizard::getBinFilling(Bin bin)
