@@ -45,6 +45,7 @@ int main(void)
 	//falkenauer_t60_00.testEvaluate();
 	//falkenauer_t60_00.testMutate();
 	//falkenauer_t60_00.testSelectParents();
-	falkenauer_t60_00.testCreateInitialClone();
+	//falkenauer_t60_00.testCreateInitialClone();
+	falkenauer_t60_00.testMutate();
 	system("pause");
 }

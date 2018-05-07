@@ -65,10 +65,15 @@ protected:
 
 	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItemsIds);
 
-	bool replacement(Bin& target, int id);
+	bool replacement(Bin& target, int id, std::vector<int>& unassignedItemsIds);
 
 	void updateTotalFitness();
 
 	int getBinFilling(Bin bin);
+
+	void printMauricioStyle(CharizardSolution solution);
+
+private:
+	int sumWeights(std::vector<int> weightIds);
 };
 
