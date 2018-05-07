@@ -7,11 +7,11 @@ struct Bin {
 	std::vector<int> weightIds;
 };
 
-std::ostream& operator<<(std::ostream& os, const Bin& obj);
-
 struct CharizardSolution {
 	std::vector<Bin> genes;
 };
+
+std::ostream& operator<<(std::ostream& os, const Bin& obj);
 
 std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj);
 
@@ -19,6 +19,7 @@ std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj);
 class Charizard {
 public:
 	Charizard(std::vector<int> weights, int binCapacity);
+
 	~Charizard();
 
 	CharizardSolution execute(/* verbose argument may be added in the future */);
@@ -38,9 +39,21 @@ public:
 	void testEvaluate();
 
 protected:
-	
 
-	void generateInitialPopulation();
+	// Maximum capacity of bins in a problem's instance
+	int _binCapacity;
+	
+	// Sum of fitnesses from all individuals
+	double _totalFitness;
+
+	// Actual weight values, a weight's Id is its index in this vector
+	std::vector<int> _weights;
+
+	// Each individual in this population is a pair of it's fitness value and itself
+	std::vector<std::pair<float, CharizardSolution>> _population;
+
+	//******* Genetic Algorithm Specific Functions ********//
+	virtual void generateInitialPopulation();
 
 	virtual std::pair<CharizardSolution, CharizardSolution> selectParents();
 
@@ -50,37 +63,29 @@ protected:
 
 	virtual float evaluate(CharizardSolution individual);
 
-	int _binCapacity;
-
-	float last;
-
-	double _totalFitness;
-
-	// May be changed to a static container
-	std::vector<int> _weights;
-
-	std::vector<std::pair<float, CharizardSolution>> _population;
-
-	friend bool operator<(const std::pair<float, CharizardSolution> & op1, const std::pair<float, CharizardSolution>& op2)
-	{
-		return op1.first < op2.first;
-	}
-
+	//******** Bin Packing Heuristics Functions *********//
+	
 	void firstFitDescendingHeuristic(CharizardSolution& invalidSolution, std::vector<int> unassignedItemsIds);
 
 	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItemsIds);
 
 	bool replacement(Bin& target, int id, std::vector<int>& unassignedItemsIds);
 
+	//******* Auxiliary functions ********//
+
+	CharizardSolution translateIdsToWeights(CharizardSolution idContainer);
+
 	void updateTotalFitness();
 
 	int getBinFilling(Bin bin);
 
-	void printMauricioStyle(CharizardSolution solution);
-
 	void mergeSecondParent(CharizardSolution& invalidSolution, CharizardSolution validSolution);
 
-private:
+	friend bool operator<(const std::pair<float, CharizardSolution> & op1, const std::pair<float, CharizardSolution>& op2);
+
+	void printMauricioStyle(CharizardSolution solution);
+
 	int sumWeights(std::vector<int> weightIds);
+
 };
 

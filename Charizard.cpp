@@ -10,7 +10,7 @@
 #define EVALUATION_CONSTANT 3.0
 #define POPULATIONSIZE 40
 #define NOTIMPROVEDGENERATIONS 10
-#define MUTATION_RATE 1.0
+#define MUTATION_RATE 1.2
 
 std::ostream& operator<<(std::ostream& os, const Bin& obj)
 {
@@ -34,16 +34,27 @@ std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj)
 	return os;
 }
 
+bool operator<(const std::pair<float, CharizardSolution> & op1, const std::pair<float, CharizardSolution>& op2)
+{
+	return op1.first < op2.first;
+}
+
 bool operator<(const CharizardSolution right, const CharizardSolution left)
 {
 	return true;
 }
 
-void transferBins(CharizardSolution& destin, CharizardSolution source, int begin, int end)
-{
-	for (int i = begin; i <= end; i++)
-		destin.genes.push_back(source.genes[i]);
-}
+/***********************************************/
+
+void transferBins(CharizardSolution& destin, CharizardSolution source, int begin, int end);
+
+void exchange(int& first, int&second);
+
+bool hasItem(std::set<int> set, int item);
+
+bool hasItem(Bin bin, int item);
+
+/***********************************************/
 
 Charizard::Charizard(std::vector<int> weights, int binCapacity)
 {
@@ -58,13 +69,6 @@ Charizard::~Charizard()
 	_weights.~vector();
 }
 
-void Charizard::updateTotalFitness()
-{
-	_totalFitness = 0.0;
-	for (auto i : _population)
-		_totalFitness += i.first;
-}
-
 CharizardSolution Charizard::execute()
 {
 	std::default_random_engine _generator;
@@ -73,17 +77,17 @@ CharizardSolution Charizard::execute()
 	generateInitialPopulation();
 	updateTotalFitness();
 	int genNotImproved = 0;
-	int cont = 0;
 
+	// Convergence criteria is overall population improvement
 	while (genNotImproved < NOTIMPROVEDGENERATIONS)
-	{
+	{	// convergence criteria not met
 		double previousFitness = _totalFitness;
 		std::vector<std::pair<float, CharizardSolution>> offspring;
-		for (unsigned int i = 0; i < _population.size(); i+=2)
+		for (unsigned int i = 0; i < _population.size(); i += 2)
 		{
-			
+
 			std::pair<CharizardSolution, CharizardSolution> individual = crossover(selectParents());
-			
+
 			if (distribution(_generator) <= MUTATION_RATE)
 				individual.first = mutate(individual.first);
 
@@ -91,7 +95,7 @@ CharizardSolution Charizard::execute()
 				individual.second = mutate(individual.second);
 
 
-			offspring.emplace_back(evaluate(individual.first),individual.first);
+			offspring.emplace_back(evaluate(individual.first), individual.first);
 			offspring.emplace_back(evaluate(individual.second), individual.second);
 		}
 		_population = offspring;
@@ -102,12 +106,11 @@ CharizardSolution Charizard::execute()
 			genNotImproved++;
 		else
 			genNotImproved = 0;
-		cont++;
 	}
 
 	std::make_heap(_population.begin(), _population.end());
-	printMauricioStyle(_population[0].second);
-	return _population[0].second;
+	
+	return translateIdsToWeights(_population[0].second);
 }
 
 void Charizard::generateInitialPopulation()
@@ -166,93 +169,13 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 		}
 		partialFitnessValue += i.first;
 	}
-	if (!father.genes.size())
-		// HAS TO BE REVIEWED
+	if (!father.genes.size()) //mother was last individual
 		father = _population[0].second;
 	return std::pair<CharizardSolution, CharizardSolution>(mother,father);
 }
 
-void exchange(int& first, int&second)
-{
-	int aux = first;
-	first = second;
-	second = aux;
-}
-
-std::set<int> getWeightsInInterval(CharizardSolution solution, int begin, int end)
-{
-	std::set<int> list;
-	for (int i = begin; i <= end; i++)
-	{
-		for (int weightId : solution.genes[i].weightIds)
-		{
-			list.insert(weightId);
-		}
-	}
-	return list;
-}
-
-bool hasItem(std::set<int> set, int item)
-{
-	if (set.find(item) != set.end())
-		return true;
-	return false;
-}
-
-bool hasItem(Bin bin, int item)
-{
-	for (int weight : bin.weightIds)
-		if (weight == item)
-			return true;
-	return false;
-}
-
-void Charizard::mergeSecondParent(CharizardSolution& invalidSolution, CharizardSolution validSolution)
-{
-	// Weights that are already inside my solution
-	std::set<int> allocatedWeights;
-	for (Bin alreadyInside : invalidSolution.genes)
-	{
-		for (int weightId : alreadyInside.weightIds)
-			allocatedWeights.insert(weightId);
-	}
-
-	std::vector<int> unassignedItems;
-	for (Bin gene : validSolution.genes)
-	{
-		bool geneIsDirty = false;
-		for (int weight : allocatedWeights)
-		{
-			if (hasItem(gene, weight))
-			{
-				geneIsDirty = true;
-				break;
-			}
-		}
-		if (geneIsDirty)
-		{
-			// In case this gene contains a weight already inside my incomplete solution
-			// we have to track the other weights inside this same gene that are not 
-			// assigned to any bin yet
-			for (int weight : gene.weightIds)
-			{
-				if (!hasItem(allocatedWeights, weight))
-					unassignedItems.push_back(weight);
-			}
-		}
-		else
-		{
-			invalidSolution.genes.push_back(gene);
-		}
-	}
-	std::sort(unassignedItems.begin(), unassignedItems.end());
-	replacement(invalidSolution, unassignedItems);
-	firstFitDescendingHeuristic(invalidSolution, unassignedItems);
-}
-
 std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<CharizardSolution, CharizardSolution> parents)
 {
-	// refer to https://www.codeproject.com/Articles/633133/ga-bin-packing
 	CharizardSolution father, mother;
 	father = parents.second;
 	mother = parents.first;
@@ -312,7 +235,7 @@ void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, 
 	for (int itemId : unassignedItemsIds)
 	{
 		bool hasFit = false;
-		for (unsigned int i=0;i<invalidSolution.genes.size();i++)
+		for (unsigned int i = 0; i<invalidSolution.genes.size(); i++)
 		{
 			Bin gene = invalidSolution.genes[i];
 			if (getBinFilling(gene) + _weights[itemId] <= _binCapacity)
@@ -330,7 +253,6 @@ void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, 
 		}
 	}
 }
-
 
 void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItemsIds)
 {
@@ -389,13 +311,25 @@ bool Charizard::replacement(Bin& target, int id, std::vector<int>& unassignedIte
 	return false;
 }
 
-int Charizard::sumWeights(std::vector<int> weightIds) 
+CharizardSolution Charizard::translateIdsToWeights(CharizardSolution idContainer)
 {
-	int sum = 0;
-	for (int i = 0; i < weightIds.size(); i++) {
-		sum += _weights[weightIds[i]];
+	CharizardSolution external;
+	for (Bin gene : idContainer.genes)
+	{
+		for (int i = 0; i < gene.weightIds.size(); i++)
+		{
+			gene.weightIds[i] = _weights[gene.weightIds[i]];
+		}
+		external.genes.push_back(gene);
 	}
-	return sum;
+	return external;
+}
+
+void Charizard::updateTotalFitness()
+{
+	_totalFitness = 0.0;
+	for (auto i : _population)
+		_totalFitness += i.first;
 }
 
 int Charizard::getBinFilling(Bin bin)
@@ -406,6 +340,58 @@ int Charizard::getBinFilling(Bin bin)
 		filling += _weights[i];
 	}
 	return filling;
+}
+
+void Charizard::mergeSecondParent(CharizardSolution& invalidSolution, CharizardSolution validSolution)
+{
+	// Weights that are already inside my solution
+	std::set<int> allocatedWeights;
+	for (Bin alreadyInside : invalidSolution.genes)
+	{
+		for (int weightId : alreadyInside.weightIds)
+			allocatedWeights.insert(weightId);
+	}
+
+	std::vector<int> unassignedItems;
+	for (Bin gene : validSolution.genes)
+	{
+		bool geneIsDirty = false;
+		for (int weight : allocatedWeights)
+		{
+			if (hasItem(gene, weight))
+			{
+				geneIsDirty = true;
+				break;
+			}
+		}
+		if (geneIsDirty)
+		{
+			// In case this gene contains a weight already inside my incomplete solution
+			// we have to track the other weights inside this same gene that are not 
+			// assigned to any bin yet
+			for (int weight : gene.weightIds)
+			{
+				if (!hasItem(allocatedWeights, weight))
+					unassignedItems.push_back(weight);
+			}
+		}
+		else
+		{
+			invalidSolution.genes.push_back(gene);
+		}
+	}
+	std::sort(unassignedItems.begin(), unassignedItems.end());
+	replacement(invalidSolution, unassignedItems);
+	firstFitDescendingHeuristic(invalidSolution, unassignedItems);
+}
+
+int Charizard::sumWeights(std::vector<int> weightIds) 
+{
+	int sum = 0;
+	for (int i = 0; i < weightIds.size(); i++) {
+		sum += _weights[weightIds[i]];
+	}
+	return sum;
 }
 
 void Charizard::printMauricioStyle(CharizardSolution solution)
@@ -426,6 +412,33 @@ void Charizard::printMauricioStyle(CharizardSolution solution)
 	}
 }
 
+void transferBins(CharizardSolution& destin, CharizardSolution source, int begin, int end)
+{
+	for (int i = begin; i <= end; i++)
+		destin.genes.push_back(source.genes[i]);
+}
+
+void exchange(int& first, int&second)
+{
+	int aux = first;
+	first = second;
+	second = aux;
+}
+
+bool hasItem(std::set<int> set, int item)
+{
+	if (set.find(item) != set.end())
+		return true;
+	return false;
+}
+
+bool hasItem(Bin bin, int item)
+{
+	for (int weight : bin.weightIds)
+		if (weight == item)
+			return true;
+	return false;
+}
 
 // Tests
 void Charizard::testFirstFitHeuristic()

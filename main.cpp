@@ -38,11 +38,11 @@ void runInstance(std::string instanceFileName)
 	loadFromFile(instanceFileName, weights, binCapacity);
 	clock_t begin = clock();
 	Charizard instance(weights, binCapacity);
-	instance.execute();
+	std::cout << instance.execute();
 	clock_t end = clock();
 	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 	std::cout << "Ran " << instanceFileName<<", took ";
-	std::cout << elapsed_secs << " second(s) of execution." << std::endl;
+	std::cout << elapsed_secs << " second(s) of execution." << std::endl << std::endl << std::endl;
 
 }
 
