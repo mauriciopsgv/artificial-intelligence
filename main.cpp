@@ -34,16 +34,32 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 void runInstance(std::string instanceFileName)
 {
 	int binCapacity;
-	std::vector<int> weights;
-	loadFromFile(instanceFileName, weights, binCapacity);
-	clock_t begin = clock();
-	Charizard instance(weights, binCapacity);
-	std::cout << instance.execute();
-	clock_t end = clock();
-	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-	std::cout << "Ran " << instanceFileName<<", took ";
-	std::cout << elapsed_secs << " second(s) of execution." << std::endl << std::endl << std::endl;
+	std::ofstream output;
+	output.open("outputOf_" + instanceFileName);
+	if (!output.is_open())
+	{
+		std::cerr << "Couldn't open output file for "<<instanceFileName << std::endl;
+	}
+	else
+	{
+		std::vector<int> weights;
+		loadFromFile(instanceFileName, weights, binCapacity);
+		clock_t begin = clock();
+		Charizard instance(weights, binCapacity);
+		CharizardSolution sol = instance.execute();
+		clock_t end = clock();
+		double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+		std::cout << "Ran " << instanceFileName << ", took ";
+		std::cout << elapsed_secs << " second(s) of execution." << std::endl << std::endl << std::endl;
 
+		output << sol.genes.size() << std::endl;
+		for (Bin gene: sol.genes)
+		{
+			for (int weight : gene.weightIds)
+				output << weight << " ";
+			output << std::endl;
+		}
+	}
 }
 
 int main(void)
