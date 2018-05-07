@@ -31,7 +31,6 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 }
 
 
-
 int main(void)
 {
 	int binCapacity;
@@ -45,7 +44,8 @@ int main(void)
 	//falkenauer_t60_00.testEvaluate();
 	//falkenauer_t60_00.testMutate();
 	//falkenauer_t60_00.testSelectParents();
-	//falkenauer_t60_00.testCreateInitialClone();
-	falkenauer_t60_00.testGenerateInitialPopulation();
+	falkenauer_t60_00.testCreateInitialClone();
+	//falkenauer_t60_00.testGenerateInitialPopulation();
+	falkenauer_t60_00.testCrossover();
 	system("pause");
 }

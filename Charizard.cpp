@@ -165,11 +165,6 @@ void createInitialClones(CharizardSolution father, CharizardSolution mother,
 	int fatherBegin, int fatherEnd, int motherBegin, int motherEnd,
 	CharizardSolution& son, CharizardSolution& daughter)
 {
-	if (fatherEnd < fatherBegin)
-		exchange(fatherBegin, fatherEnd);
-	if (motherEnd < motherBegin)
-		exchange(motherBegin, motherEnd);
-
 	int f1 = fatherBegin, f2 = fatherEnd +1 - fatherBegin;
 	int m1 = motherBegin, m2 = motherEnd +1 - motherBegin;
 	
@@ -238,13 +233,23 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 	CharizardSolution firstClone, secondClone;
 
 	int fatherBegin, fatherEnd, motherBegin, motherEnd;
-	fatherBegin = rand() % father.genes.size();
-	fatherEnd = rand() % father.genes.size();
-	motherBegin = rand() % mother.genes.size();
-	motherEnd = rand() % mother.genes.size();
+	//fatherBegin = rand() % father.genes.size();
+	//fatherEnd = rand() % father.genes.size();
+	//motherBegin = rand() % mother.genes.size();
+	//motherEnd = rand() % mother.genes.size();
+	//if (fatherEnd < fatherBegin)
+	//	exchange(fatherBegin, fatherEnd);
+	//if (motherEnd < motherBegin)
+	//	exchange(motherBegin, motherEnd);
+	fatherBegin = 7,fatherEnd = 9,motherBegin = 15,motherEnd= 21;
+
+	std::cout << "Father: " << fatherBegin << " " << fatherEnd << std::endl;
+	std::cout << "Mother: " << motherBegin << " " << motherEnd << std::endl;
 
 	createInitialClones(father, mother, fatherBegin, fatherEnd, 
 		motherBegin, motherEnd, firstClone, secondClone);
+
+	std::cout << "Past them initialClones"<<std::endl;
 
 	// Now solutions are invalid, so we need to correct them
 	// first we identify duplicated weights (out of protected zone)
@@ -283,6 +288,7 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 				binsToBePopped2.insert(i);
 				break;
 			}
+	std::cout << "Past identifying redundancies" << std::endl;
 
 	// To capture weights that are not in redundancy
 	std::vector<int> unassignedItems1, unassignedItems2;
@@ -295,6 +301,8 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 		for (int weightId : secondClone.genes[soonToBePopped].weightIds)
 			if (!hasItem(redundancyInClone2, weightId))
 				unassignedItems2.push_back(weightId);
+
+	std::cout << "Past identifying redundancies' bins" << std::endl;
 	//actually pop
 	std::vector<Bin> newClone1;
 	for (int i = 0; i < firstClone.genes.size(); i++)
@@ -311,7 +319,7 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 	}
 	firstClone.genes = newClone1;
 	secondClone.genes = newClone2;
-
+	std::cout << "Past pop" << std::endl;
 	// finally we rearrenge the weights that are not in any bin
 	std::sort(unassignedItems1.begin(), unassignedItems1.end());
 	std::sort(unassignedItems2.begin(), unassignedItems2.end());
@@ -324,7 +332,7 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 
 	firstFitDescendingHeuristic(firstClone,unassignedItems1);
 	firstFitDescendingHeuristic(secondClone, unassignedItems2);
-
+	std::cout << "Past everything" << std::endl;
 	return std::pair<CharizardSolution, CharizardSolution>(firstClone,secondClone);
 }
 
@@ -504,28 +512,28 @@ void Charizard::testCreateInitialClone()
 	firstFitDescendingHeuristic(father, _w1);
 	firstFitDescendingHeuristic(mother, _w2);
 	
-	std::ofstream output("parents.txt");
-	if (!output.is_open())
-		std::cerr << "Opening output went wrong."<<std::endl;
-	output << "Father: " << father << std::endl;
-	output << "Mother: " << mother << std::endl;
-	output.close();
+	//std::ofstream output("parents.txt");
+	//if (!output.is_open())
+	//	std::cerr << "Opening output went wrong."<<std::endl;
+	//output << "Father: " << father << std::endl;
+	//output << "Mother: " << mother << std::endl;
+	//output.close();
 
-	//createInitialClones(father, mother, 7, 9, 15, 21, son, daughter);
-	//std::cout << "Son 1: " << son << std::endl;
-	//std::cout << "Daughter 1: " << daughter << std::endl;
+	createInitialClones(father, mother, 7, 9, 15, 21, son, daughter);
+	std::cout << "Son 1: " << son << std::endl;
+	std::cout << "Daughter 1: " << daughter << std::endl;
 
-	son.genes.clear();
-	daughter.genes.clear();
-	createInitialClones(father, mother, 0, 4, 15, 21, son, daughter);
-	std::cout << "Son 2: " << son << std::endl;
-	std::cout << "Daughter 2: " << daughter << std::endl;
+	//son.genes.clear();
+	//daughter.genes.clear();
+	//createInitialClones(father, mother, 0, 4, 15, 21, son, daughter);
+	//std::cout << "Son 2: " << son << std::endl;
+	//std::cout << "Daughter 2: " << daughter << std::endl;
 
-	son.genes.clear();
-	daughter.genes.clear();
-	createInitialClones(father, mother, 7, 11, 19, 24, son, daughter);
-	std::cout << "Son 3: " << son << std::endl;
-	std::cout << "Daughter 3: " << daughter << std::endl;
+	//son.genes.clear();
+	//daughter.genes.clear();
+	//createInitialClones(father, mother, 7, 11, 19, 24, son, daughter);
+	//std::cout << "Son 3: " << son << std::endl;
+	//std::cout << "Daughter 3: " << daughter << std::endl;
 /*
 	son.genes.clear();
 	daughter.genes.clear();
@@ -542,4 +550,29 @@ void Charizard::testGenerateInitialPopulation()
 		std::cout << evaluatedIndividual.first << std::endl;
 		std::cout << evaluatedIndividual.second << std::endl;
 	}
+}
+
+void Charizard::testCrossover() 
+{
+	std::ofstream log("log.txt");
+	if (!log.is_open())
+	{
+		std::cerr << "Deu ruim no log." << std::endl;
+	}
+	
+	CharizardSolution father, mother;
+	std::vector<int> _w1, _w2;
+	int range = (int)_weights.size();
+	int i = 0;
+	while (i++ < range)
+	{
+		_w1.push_back(i - 1);
+		_w2.push_back(range - i);
+	}
+	firstFitDescendingHeuristic(father, _w1);
+	firstFitDescendingHeuristic(mother, _w2);
+	auto offspring = crossover(std::make_pair(father, mother));
+	log << offspring.first << std::endl;
+	log << offspring.second << std::endl;
+	log.close();
 }
