@@ -9,6 +9,8 @@
 
 #define EVALUATION_CONSTANT 3.0
 #define POPULATIONSIZE 5
+#define NOTIMPROVEDGENERATIONS 30
+#define MUTATION_RATE 0.01
 
 std::ostream& operator<<(std::ostream& os, const Bin& obj)
 {
@@ -38,7 +40,11 @@ bool operator<(const CharizardSolution right, const CharizardSolution left)
 	return true;
 }
 
-
+void transferBins(CharizardSolution& destin, CharizardSolution source, int begin, int end)
+{
+	for (int i = begin; i <= end; i++)
+		destin.genes.push_back(source.genes[i]);
+}
 
 Charizard::Charizard(std::vector<int> weights, int binCapacity)
 {
@@ -52,7 +58,6 @@ Charizard::~Charizard()
 {
 	_weights.~vector();
 }
-#define NOTIMPROVEDGENERATIONS 30
 
 void Charizard::updateTotalFitness()
 {
@@ -160,67 +165,81 @@ void exchange(int& first, int&second)
 	second = aux;
 }
 
-//cria Soluções inválidas com pesos redundantes
-void createInitialClones(CharizardSolution father, CharizardSolution mother,
-	int fatherBegin, int fatherEnd, int motherBegin, int motherEnd,
-	CharizardSolution& son, CharizardSolution& daughter)
-{
-	int f1 = fatherBegin, f2 = fatherEnd +1 - fatherBegin;
-	int m1 = motherBegin, m2 = motherEnd +1 - motherBegin;
-	
-	auto dadBin = father.genes.begin();
-	auto mumBin = mother.genes.begin();
-	while (f1-- >0)
-	{
-		son.genes.push_back(*dadBin);
-		dadBin++;
-	}
-	while (m1-- >0)
-	{
-		daughter.genes.push_back(*mumBin);
-		mumBin++;
-	}
-	while (f2--)
-	{
-		son.genes.push_back(*dadBin);
-		daughter.genes.push_back(*dadBin);
-		dadBin++;
-	}
-	while (m2--)
-	{
-		son.genes.push_back(*mumBin);
-		daughter.genes.push_back(*mumBin);
-		mumBin++;
-	}
-
-	while (dadBin != father.genes.end())
-	{
-		son.genes.push_back(*dadBin);
-		dadBin++;
-	}
-	while (mumBin != mother.genes.end())
-	{
-		daughter.genes.push_back(*mumBin);
-		mumBin++;
-	}
-}
-
 std::set<int> getWeightsInInterval(CharizardSolution solution, int begin, int end)
 {
 	std::set<int> list;
+	std::cout << "Begin: " << begin << "End: " << end << std::endl;
+	std::cout << solution << std::endl;
 	for (int i = begin; i <= end; i++)
-		for (int weight : solution.genes[i].weightIds)
-			list.insert(weight);
+	{
+		for (int weightId : solution.genes[i].weightIds)
+		{
+			list.insert(weightId);
+			std::cout << "put inside set: " << weightId << std::endl;
+		}
+	}
 	return list;
 }
-
-
 
 bool hasItem(std::set<int> set, int item)
 {
 	if (set.find(item) != set.end())
 		return true;
 	return false;
+}
+
+bool hasItem(Bin bin, int item)
+{
+	for (int weight : bin.weightIds)
+		if (weight == item)
+			return true;
+	return false;
+}
+
+void Charizard::mergeSecondParent(CharizardSolution& invalidSolution, CharizardSolution validSolution)
+{
+	// Weights that are already inside my solution
+	std::set<int> allocatedWeights;
+	for (Bin alreadyInside : invalidSolution.genes)
+	{
+		for (int weightId : alreadyInside.weightIds)
+			allocatedWeights.insert(weightId);
+	}
+
+	std::vector<int> unassignedItems;
+	for (Bin gene : validSolution.genes)
+	{
+		bool geneIsDirty = false;
+		for (int weight : allocatedWeights)
+		{
+			if (hasItem(gene, weight))
+			{
+				geneIsDirty = true;
+				break;
+			}
+		}
+		if (geneIsDirty)
+		{
+			// In case this gene contains a weight already inside my incomplete solution
+			// we have to track the other weights inside this same gene that are not 
+			// assigned to any bin yet
+			for (int weight : gene.weightIds)
+			{
+				if (!hasItem(allocatedWeights, weight))
+					unassignedItems.push_back(weight);
+			}
+		}
+		else
+		{
+			invalidSolution.genes.push_back(gene);
+		}
+	}
+	std::sort(unassignedItems.begin(), unassignedItems.end());
+	std::cout << invalidSolution << std::endl;
+	for (int i : unassignedItems)
+		std::cout << "unassigned: " << i << std::endl;
+	replacement(invalidSolution, unassignedItems);
+	firstFitDescendingHeuristic(invalidSolution, unassignedItems);
 }
 
 std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<CharizardSolution, CharizardSolution> parents)
@@ -233,106 +252,21 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<C
 	CharizardSolution firstClone, secondClone;
 
 	int fatherBegin, fatherEnd, motherBegin, motherEnd;
-	//fatherBegin = rand() % father.genes.size();
-	//fatherEnd = rand() % father.genes.size();
-	//motherBegin = rand() % mother.genes.size();
-	//motherEnd = rand() % mother.genes.size();
-	//if (fatherEnd < fatherBegin)
-	//	exchange(fatherBegin, fatherEnd);
-	//if (motherEnd < motherBegin)
-	//	exchange(motherBegin, motherEnd);
-	fatherBegin = 7,fatherEnd = 9,motherBegin = 15,motherEnd= 21;
+	fatherBegin = rand() % father.genes.size();
+	fatherEnd = rand() % father.genes.size();
+	motherBegin = rand() % mother.genes.size();
+	motherEnd = rand() % mother.genes.size();
+	if (fatherEnd < fatherBegin)
+		exchange(fatherBegin, fatherEnd);
+	if (motherEnd < motherBegin)
+		exchange(motherBegin, motherEnd);
 
-	std::cout << "Father: " << fatherBegin << " " << fatherEnd << std::endl;
-	std::cout << "Mother: " << motherBegin << " " << motherEnd << std::endl;
+	transferBins(firstClone, mother, motherBegin, motherEnd);
+	transferBins(secondClone, father, fatherBegin, fatherEnd);
 
-	createInitialClones(father, mother, fatherBegin, fatherEnd, 
-		motherBegin, motherEnd, firstClone, secondClone);
+	mergeSecondParent(firstClone, father);
+	mergeSecondParent(secondClone, mother);
 
-	std::cout << "Past them initialClones"<<std::endl;
-
-	// Now solutions are invalid, so we need to correct them
-	// first we identify duplicated weights (out of protected zone)
-	std::set<int> redundancyInClone1 = getWeightsInInterval(mother, motherBegin, motherEnd);
-	std::set<int> redundancyInClone2 = getWeightsInInterval(father, fatherBegin, fatherEnd);
-	
-	// then we must pop the Bins containing them and get the weights with no bin that aren't duplicates
-	std::set<int>binsToBePopped1, binsToBePopped2;
-
-	for (int i = 0; i <= fatherEnd; i++)
-		for (int weightId : firstClone.genes[i].weightIds)
-			if (hasItem(redundancyInClone1, weightId))
-			{
-				binsToBePopped1.insert(i);
-				break;
-			}
-	for(int i=fatherEnd+1+motherEnd-motherBegin;i<(int)firstClone.genes.size();i++)
-		for (int weightId : firstClone.genes[i].weightIds)
-			if (hasItem(redundancyInClone1, weightId))
-			{
-				binsToBePopped1.insert(i);
-				break;
-			}
-
-	for(int i=0;i<motherBegin;i++)
-		for (int weightId : secondClone.genes[i].weightIds)
-			if (hasItem(redundancyInClone2, weightId))
-			{
-				binsToBePopped2.insert(i);
-				break;
-			}
-	for(int i=motherBegin+1+fatherEnd-fatherBegin;i<(int)secondClone.genes.size();i++)
-		for (int weightId : secondClone.genes[i].weightIds)
-			if (hasItem(redundancyInClone2, weightId))
-			{
-				binsToBePopped2.insert(i);
-				break;
-			}
-	std::cout << "Past identifying redundancies" << std::endl;
-
-	// To capture weights that are not in redundancy
-	std::vector<int> unassignedItems1, unassignedItems2;
-	for (int soonToBePopped : binsToBePopped1)
-		for (int weightId : firstClone.genes[soonToBePopped].weightIds)
-			if (!hasItem(redundancyInClone1, weightId))
-				unassignedItems1.push_back(weightId);
-
-	for (int soonToBePopped : binsToBePopped2)
-		for (int weightId : secondClone.genes[soonToBePopped].weightIds)
-			if (!hasItem(redundancyInClone2, weightId))
-				unassignedItems2.push_back(weightId);
-
-	std::cout << "Past identifying redundancies' bins" << std::endl;
-	//actually pop
-	std::vector<Bin> newClone1;
-	for (int i = 0; i < firstClone.genes.size(); i++)
-	{
-		if (!hasItem(binsToBePopped1, i))
-			newClone1.push_back(firstClone.genes[i]);
-	}
-
-	std::vector<Bin> newClone2;
-	for (int i = 0; i < secondClone.genes.size(); i++)
-	{
-		if (!hasItem(binsToBePopped1, i))
-			newClone2.push_back(secondClone.genes[i]);
-	}
-	firstClone.genes = newClone1;
-	secondClone.genes = newClone2;
-	std::cout << "Past pop" << std::endl;
-	// finally we rearrenge the weights that are not in any bin
-	std::sort(unassignedItems1.begin(), unassignedItems1.end());
-	std::sort(unassignedItems2.begin(), unassignedItems2.end());
-
-	replacement(firstClone, unassignedItems1);
-	replacement(secondClone, unassignedItems2);
-
-	std::sort(unassignedItems1.begin(), unassignedItems1.end());
-	std::sort(unassignedItems2.begin(), unassignedItems2.end());
-
-	firstFitDescendingHeuristic(firstClone,unassignedItems1);
-	firstFitDescendingHeuristic(secondClone, unassignedItems2);
-	std::cout << "Past everything" << std::endl;
 	return std::pair<CharizardSolution, CharizardSolution>(firstClone,secondClone);
 }
 
@@ -467,6 +401,26 @@ int Charizard::getBinFilling(Bin bin)
 	return filling;
 }
 
+void Charizard::printMauricioStyle(CharizardSolution solution)
+{
+	std::cout << "Number of bins:" << solution.genes.size() << std::endl;
+	int i = 0;
+	for (Bin gene : solution.genes)
+	{
+		std::cout << i++ << " ";
+		std::cout << "[ ";
+		for (int weightId : gene.weightIds)
+		{
+			std::cout << weightId << ":" << _weights[weightId] << " ";
+		}
+		std::cout << "]";
+
+		std::cout << " " << sumWeights(gene.weightIds) << " out of " << _binCapacity << std::endl;
+	}
+}
+
+
+// Tests
 void Charizard::testFirstFitHeuristic()
 {
 	CharizardSolution target;
@@ -475,7 +429,7 @@ void Charizard::testFirstFitHeuristic()
 	int i = 0;
 	while (i++ < z)
 	{
-		weightsIds.push_back(i-1);
+		weightsIds.push_back(i - 1);
 	}
 	firstFitDescendingHeuristic(target, weightsIds);
 	std::cout << target;
@@ -497,24 +451,6 @@ void Charizard::testMutate()
 	target = mutate(target);
 	//std::cout << target <<evaluate(target);
 	printMauricioStyle(target);
-}
-
-void Charizard::printMauricioStyle(CharizardSolution solution)
-{
-	std::cout << "Number of bins:" << solution.genes.size() << std::endl;
-	int i = 0;
-	for (Bin gene : solution.genes)
-	{
-		std::cout << i++ << " ";
-		std::cout << "[ ";
-		for (int weightId : gene.weightIds)
-		{
-			std::cout << weightId << ":" << _weights[weightId] << " ";
-		}
-		std::cout << "]";
-
-		std::cout << " " << sumWeights(gene.weightIds) << " out of " << _binCapacity << std::endl;
-	}
 }
 
 void Charizard::testSelectParents()
@@ -562,51 +498,6 @@ void Charizard::testEvaluate()
 		std::cout << i << target.genes[i] << " Filling: " << getBinFilling(target.genes[i]) << std::endl;
 	}
 	std::cout << evaluate(target) << std::endl;
-}
-
-void Charizard::testCreateInitialClone()
-{
-	
-	CharizardSolution father, mother, daughter, son;
-	std::vector<int> _w1, _w2;
-	int range = (int)_weights.size();
-	int i = 0;
-	while (i++ < range)
-	{
-		_w1.push_back(i-1);
-		_w2.push_back(range - i);
-	}
-	firstFitDescendingHeuristic(father, _w1);
-	firstFitDescendingHeuristic(mother, _w2);
-	
-	//std::ofstream output("parents.txt");
-	//if (!output.is_open())
-	//	std::cerr << "Opening output went wrong."<<std::endl;
-	//output << "Father: " << father << std::endl;
-	//output << "Mother: " << mother << std::endl;
-	//output.close();
-
-	createInitialClones(father, mother, 7, 9, 15, 21, son, daughter);
-	std::cout << "Son 1: " << son << std::endl;
-	std::cout << "Daughter 1: " << daughter << std::endl;
-
-	//son.genes.clear();
-	//daughter.genes.clear();
-	//createInitialClones(father, mother, 0, 4, 15, 21, son, daughter);
-	//std::cout << "Son 2: " << son << std::endl;
-	//std::cout << "Daughter 2: " << daughter << std::endl;
-
-	//son.genes.clear();
-	//daughter.genes.clear();
-	//createInitialClones(father, mother, 7, 11, 19, 24, son, daughter);
-	//std::cout << "Son 3: " << son << std::endl;
-	//std::cout << "Daughter 3: " << daughter << std::endl;
-/*
-	son.genes.clear();
-	daughter.genes.clear();
-	createInitialClones(father, mother, 7, 11, 7, 7, son, daughter);
-	std::cout << "Son 4: " << son << std::endl;
-	std::cout << "Daughter 4: " << daughter << std::endl;*/
 }
 
 void Charizard::testGenerateInitialPopulation()

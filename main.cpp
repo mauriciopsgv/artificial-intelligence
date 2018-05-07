@@ -44,14 +44,8 @@ int main(void)
 	//falkenauer_t60_00.testEvaluate();
 	//falkenauer_t60_00.testMutate();
 	//falkenauer_t60_00.testSelectParents();
-<<<<<<< HEAD
-	falkenauer_t60_00.testCreateInitialClone();
 	//falkenauer_t60_00.testGenerateInitialPopulation();
-	falkenauer_t60_00.testCrossover();
-=======
-	//falkenauer_t60_00.testCreateInitialClone();
-	falkenauer_t60_00.testMutate();
-	falkenauer_t60_00.testGenerateInitialPopulation();
->>>>>>> 721151e2b073c23f90ddf4b825aeee69e73bedb5
+	//Charizard controlado("controlado.txt");
+	std::cout<< falkenauer_t60_00.execute();
 	system("pause");
 }

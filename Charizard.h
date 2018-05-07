@@ -1,14 +1,20 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <set>
 
 struct Bin {
 	std::vector<int> weightIds;
 };
 
+std::ostream& operator<<(std::ostream& os, const Bin& obj);
+
 struct CharizardSolution {
 	std::vector<Bin> genes;
 };
+
+std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj);
+
 
 class Charizard {
 public:
@@ -30,8 +36,6 @@ public:
 	void testSelectParents();
 
 	void testEvaluate();
-
-	void testCreateInitialClone();
 
 protected:
 
@@ -72,6 +76,8 @@ protected:
 	int getBinFilling(Bin bin);
 
 	void printMauricioStyle(CharizardSolution solution);
+
+	void mergeSecondParent(CharizardSolution& invalidSolution, CharizardSolution validSolution);
 
 private:
 	int sumWeights(std::vector<int> weightIds);
