@@ -13,7 +13,7 @@ Solution::Solution(std::vector<int> weights, int binCapacity) {
 	std::vector<int> peso_temp;
 	float total_fullness = 0.0;
 
-	for (int item_index = 0; item_index < _weights.size(); item_index++) {
+	for (int item_index = 0; item_index < (int) _weights.size(); item_index++) {
 		if (c - _weights[item_index] >= 0) {
 			c -= _weights[item_index];
 			peso_temp.push_back(item_index);
@@ -47,7 +47,7 @@ Solution::~Solution() {
 
 float Solution::getFullnessByBins(std::vector<int> binWeights) {
 	float sum = 0;
-	for (int i = 0; i < binWeights.size(); i++) {
+	for (int i = 0; i < (int) binWeights.size(); i++) {
 		sum += (float) _weights[binWeights[i]];
 	}
 	return sum;
@@ -57,7 +57,7 @@ float Solution::fitnessValueByBins() {
 	
 	float total_fullness = 0.0;
 
-	for (int bin_index = 0; bin_index < bins.size(); bin_index++) {
+	for (int bin_index = 0; bin_index < (int) bins.size(); bin_index++) {
 		total_fullness += (getFullnessByBins(bins[bin_index].weights) / (float)_binCapacity) * (getFullnessByBins(bins[bin_index].weights) / (float)_binCapacity);
 	}
 
@@ -68,7 +68,7 @@ void Solution::firstFitRemaining(std::vector<int> unnasignedItems) {
 	int c = _binCapacity;
 	std::vector<int> peso_temp;
 
-	for (int item_index = 0; item_index < unnasignedItems.size(); item_index++) {
+	for (int item_index = 0; item_index < (int) unnasignedItems.size(); item_index++) {
 		if (c - _weights[unnasignedItems[item_index]] >= 0) {
 			c -= _weights[unnasignedItems[item_index]];
 			peso_temp.push_back(unnasignedItems[item_index]);
@@ -111,8 +111,6 @@ void Solution::replacement(std::vector<int>& unassignedItemsIds)
 
 bool Solution::replacement(Bin& target, int id, std::vector<int>& unassignedItemsIds)
 {
-	// Para cada peso dentro do bin
-	//		subistitiu por peso de id
 	int currentFullness;
 	int originalBinFullness = sumWeights(target.weights);
 
@@ -121,7 +119,7 @@ bool Solution::replacement(Bin& target, int id, std::vector<int>& unassignedItem
 		return true;
 	}
 
-	for (int i = 0; i < target.weights.size(); i++) {
+	for (int i = 0; i < (int) target.weights.size(); i++) {
 		currentFullness = originalBinFullness - _weights[target.weights[i]] + _weights[id];
 		if (currentFullness < _binCapacity &&
 			currentFullness > originalBinFullness) {
@@ -132,8 +130,8 @@ bool Solution::replacement(Bin& target, int id, std::vector<int>& unassignedItem
 		}
 	}
 
-	for (int i = 0; i < target.weights.size() - 1; i++) {
-		for (int j = i + 1; j < target.weights.size(); j++) {
+	for (int i = 0; i < (int) target.weights.size() - 1; i++) {
+		for (int j = i + 1; j < (int) target.weights.size(); j++) {
 			currentFullness = originalBinFullness - (_weights[target.weights[i]] + _weights[target.weights[j]]) + _weights[id];
 			if (currentFullness < _binCapacity &&
 				currentFullness > originalBinFullness) {
@@ -153,21 +151,13 @@ bool Solution::replacement(Bin& target, int id, std::vector<int>& unassignedItem
 int Solution::sumWeights(std::vector<int> weightIds)
 {
 	int sum = 0;
-	for (int i = 0; i < weightIds.size(); i++) {
+	for (int i = 0; i < (int) weightIds.size(); i++) {
 		sum += _weights[weightIds[i]];
 	}
 	return sum;
 }
 
 void Solution::printBins() {
-	//std::cout << "Bins:";
-	//for (int i = 0; i < bins.size(); i++) {
-	//	std::cout << i << " [ ";
-	//	for (int j = 0; j < bins[i].weights.size(); j++) {
-	//		std::cout << bins[i].weights[j] << " ";
-	//	}
-	//	std::cout << " ]" << std::endl;
-	
 	std::cout << "---------------" << std::endl;
 	std::cout << "Fitness Value = " << this->fitnessValueByBins() << std::endl;
 	std::cout << "Bins = " << bins.size() << std::endl;
@@ -176,10 +166,10 @@ void Solution::printBins() {
 void Solution::writeOutputFile(std::string fileName) {
 	float fitnessValue = this->fitnessValueByBins();
 	std::ofstream outputFile;
-	outputFile.open("output.txt");
-	outputFile << _numBins << std::endl;
-	for (int i = 0; i < bins.size(); i++) {
-		for (int j = 0; j < bins[i].weights.size(); j++) {
+	outputFile.open(fileName);
+	outputFile << bins.size() << std::endl;
+	for (int i = 0; i < (int) bins.size(); i++) {
+		for (int j = 0; j < (int) bins[i].weights.size(); j++) {
 			outputFile << bins[i].weights[j] << " ";
 		}
 		outputFile << std::endl;
