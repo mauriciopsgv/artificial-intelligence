@@ -348,8 +348,7 @@ CharizardSolution Charizard::mutate(CharizardSolution individual)
 	individual.genes.pop_back();
 
 	// replacement should be called here
-	//replacement(individual, weightIds);
-
+	replacement(individual, weightIds);
 	firstFitDescendingHeuristic(individual, weightIds);
 
 	return individual;
@@ -394,20 +393,68 @@ void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, 
 
 void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItemsIds)
 {
-	// Tries to insert according to the replacement method
-	for (int i = 0;i<(int)invalidSolution.genes.size();i++)
-	{
+	// Try to put unassigned items inside invalid solution so bins get fuller
+	std::vector<int> itemsToBeAssigned = *new std::vector<int>(unassignedItemsIds);
 
+	// Tries to insert according to the replacement method
+	for (int item = itemsToBeAssigned.size() - 1; item >= 0; item--) {
+		for (int binNumber = (int)invalidSolution.genes.size() - 1; binNumber >= 0; binNumber--) {
+			if (replacement(invalidSolution.genes[binNumber], itemsToBeAssigned[item], unassignedItemsIds)) {
+				unassignedItemsIds.erase(unassignedItemsIds.begin() + item);
+				break;
+			}
+		}
 	}
 }
 
-bool Charizard::replacement(Bin& target, int id)
+bool Charizard::replacement(Bin& target, int id, std::vector<int>& unassignedItemsIds)
 {
 	// Para cada peso dentro do bin
 	//		subistitiu por peso de id
-	//		
-	//
+	int currentFullness;
+	int originalBinFullness = sumWeights(target.weightIds);
+
+	if (originalBinFullness + _weights[id] < _binCapacity) {
+		target.weightIds.push_back(id);
+		return true;
+	}
+
+	for (int i = 0; i < target.weightIds.size(); i++) {
+		currentFullness = originalBinFullness - _weights[target.weightIds[i]] + _weights[id];
+		if (currentFullness < _binCapacity &&
+			currentFullness > originalBinFullness) {
+			unassignedItemsIds.push_back(target.weightIds[i]);
+			target.weightIds.erase(target.weightIds.begin() + i);
+			target.weightIds.push_back(id);
+			return true;
+		}
+	}
+
+	for (int i = 0; i < target.weightIds.size() - 1; i++) {
+		for (int j = i + 1; j < target.weightIds.size(); j++) {
+			currentFullness = originalBinFullness - (_weights[target.weightIds[i]] + _weights[target.weightIds[j]]) + _weights[id];
+			if (currentFullness < _binCapacity &&
+				currentFullness > originalBinFullness) {
+				unassignedItemsIds.push_back(target.weightIds[i]);
+				unassignedItemsIds.push_back(target.weightIds[j]);
+				target.weightIds.erase(target.weightIds.begin() + i);
+				target.weightIds.erase(target.weightIds.begin() + j);
+				target.weightIds.push_back(id);
+				return true;
+			}
+		}
+	}
+
 	return false;
+}
+
+int Charizard::sumWeights(std::vector<int> weightIds) 
+{
+	int sum = 0;
+	for (int i = 0; i < weightIds.size(); i++) {
+		sum += _weights[weightIds[i]];
+	}
+	return sum;
 }
 
 int Charizard::getBinFilling(Bin bin)
@@ -445,9 +492,29 @@ void Charizard::testMutate()
 		weightsIds.push_back(i - 1);
 	}
 	firstFitDescendingHeuristic(target, weightsIds);
-	std::cout << target << evaluate(target);
+	printMauricioStyle(target);
+	//std::cout << target << evaluate(target);
 	target = mutate(target);
-	std::cout << target <<evaluate(target);
+	//std::cout << target <<evaluate(target);
+	printMauricioStyle(target);
+}
+
+void Charizard::printMauricioStyle(CharizardSolution solution)
+{
+	std::cout << "Number of bins:" << solution.genes.size() << std::endl;
+	int i = 0;
+	for (Bin gene : solution.genes)
+	{
+		std::cout << i++ << " ";
+		std::cout << "[ ";
+		for (int weightId : gene.weightIds)
+		{
+			std::cout << weightId << ":" << _weights[weightId] << " ";
+		}
+		std::cout << "]";
+
+		std::cout << " " << sumWeights(gene.weightIds) << " out of " << _binCapacity << std::endl;
+	}
 }
 
 void Charizard::testSelectParents()
