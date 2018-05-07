@@ -25,9 +25,8 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 		int weight;
 		input >> weight;
 		weights.push_back(weight);
-		std::cout << weight << std::endl;
-		std::cout << "Quantidade lida: " << (float)(i+1) / numOfElements * 100 << "%" << std::endl;
 	}
+	std::cout << "Quantidade lida: 100%" << std::endl;
 	input.close();
 }
 
@@ -45,6 +44,7 @@ int main(void)
 	//falkenauer_t60_00.testFirstFitHeuristic();
 	//falkenauer_t60_00.testEvaluate();
 	//falkenauer_t60_00.testMutate();
-	falkenauer_t60_00.testSelectParents();
+	//falkenauer_t60_00.testSelectParents();
+	falkenauer_t60_00.testCreateInitialClone();
 	system("pause");
 }

@@ -48,26 +48,44 @@ Charizard::~Charizard()
 {
 	_weights.~vector();
 }
+#define NOTIMPROVEDGENERATIONS 30
+
+void Charizard::updateTotalFitness()
+{
+	_totalFitness = 0.0;
+	for (auto i : _population)
+		_totalFitness += i.first;
+}
 
 CharizardSolution Charizard::execute()
 {
 	generateInitialPopulation();
-	while (!algorithmHasConverged())
-	{
-		_totalFitness = 0.0;
-		for (auto i : _population)
-			_totalFitness += i.first;
+	updateTotalFitness();
+	int genNotImproved = 0;
 
+	while (genNotImproved < NOTIMPROVEDGENERATIONS)
+	{
+		double previousFitness = _totalFitness;
 		std::vector<std::pair<float, CharizardSolution>> offspring;
-		for (unsigned int i = 0; i < _population.size(); i++)
+		for (unsigned int i = 0; i < _population.size(); i+=2)
 		{
-			CharizardSolution individual = crossover(selectParents());
+			std::pair<CharizardSolution, CharizardSolution> individual = crossover(selectParents());
 			// Mutation comes here
-			offspring.emplace_back(evaluate(individual),individual);
+			offspring.emplace_back(evaluate(individual.first),individual.first);
+			offspring.emplace_back(evaluate(individual.second), individual.second);
 		}
 		_population = offspring;
+
+		updateTotalFitness();
+
+		if (_totalFitness <= previousFitness)
+			genNotImproved++;
+		else
+			genNotImproved = 0;
 	}
+	std::make_heap(_population.begin(), _population.end());
 	std::sort_heap(_population.begin(), _population.end());
+	
 	return _population[0].second;
 }
 
@@ -134,19 +152,95 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 	return std::pair<CharizardSolution, CharizardSolution>(mother,father);
 }
 
-CharizardSolution Charizard::crossover(std::pair<CharizardSolution, CharizardSolution> parents)
+void exchange(int& first, int&second)
+{
+	int aux = first;
+	first = second;
+	second = aux;
+}
+
+//cria Soluções inválidas com pesos redundantes
+void createInitialClones(CharizardSolution father, CharizardSolution mother,
+	int fatherBegin, int fatherEnd, int motherBegin, int motherEnd,
+	CharizardSolution& son, CharizardSolution& daughter)
+{
+	if (fatherEnd < fatherBegin)
+		exchange(fatherBegin, fatherEnd);
+	if (motherEnd < motherBegin)
+		exchange(motherBegin, motherEnd);
+
+	int f1 = fatherBegin, f2 = fatherEnd +1 - fatherBegin;
+	int m1 = motherBegin, m2 = motherEnd +1 - motherBegin;
+	
+	auto dadBin = father.genes.begin();
+	auto mumBin = mother.genes.begin();
+	while (f1-- >0)
+	{
+		son.genes.push_back(*dadBin);
+		dadBin++;
+	}
+	while (m1-- >0)
+	{
+		daughter.genes.push_back(*mumBin);
+		mumBin++;
+	}
+	while (f2--)
+	{
+		son.genes.push_back(*dadBin);
+		daughter.genes.push_back(*dadBin);
+		dadBin++;
+	}
+	while (m2--)
+	{
+		son.genes.push_back(*mumBin);
+		daughter.genes.push_back(*mumBin);
+		mumBin++;
+	}
+
+	while (dadBin != father.genes.end())
+	{
+		son.genes.push_back(*dadBin);
+		dadBin++;
+	}
+	while (mumBin != mother.genes.end())
+	{
+		daughter.genes.push_back(*mumBin);
+		mumBin++;
+	}
+}
+
+
+std::pair<CharizardSolution, CharizardSolution> Charizard::crossover(std::pair<CharizardSolution, CharizardSolution> parents)
 {
 	// refer to https://www.codeproject.com/Articles/633133/ga-bin-packing
 
 	// initially selects two ranges in both parents
-	// insert these guys in the other's 
+	// insert these guys in the other's
+	CharizardSolution father, mother;
+	father = parents.second;
+	mother = parents.first;
+
+	CharizardSolution firstClone, secondClone;
+
+	int fatherBegin, fatherEnd, motherBegin, motherEnd;
+	fatherBegin = rand()%parents.second.genes.size();
+	fatherEnd = rand() % parents.second.genes.size();
+
+	motherBegin = rand() % parents.first.genes.size();
+	motherEnd = rand() % parents.first.genes.size();
+
+	createInitialClones(father, mother, fatherBegin, fatherEnd, 
+		motherBegin, motherEnd, firstClone, secondClone);
+	// Fim das inserções
 
 	// pop original parents bins with repetition of what has been inserted
+
+
 
 	// use replacement to further improve descendant's fitness
 	// firstfitDescendingHeuristic used to make sure solutions are now valid
 	// return offspring
-	return CharizardSolution();
+	return std::pair<CharizardSolution, CharizardSolution>(firstClone,secondClone);
 }
 
 CharizardSolution Charizard::mutate(CharizardSolution individual)
@@ -182,6 +276,9 @@ float Charizard::evaluate(CharizardSolution individual)
 bool Charizard::algorithmHasConverged()
 {
 	// Stop Criteria: number of generations without improvements
+
+
+
 	return false;
 }
 
@@ -211,7 +308,6 @@ void Charizard::firstFitDescendingHeuristic(CharizardSolution& invalidSolution, 
 }
 
 
-
 void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int>& unassignedItemsIds)
 {
 	// Tries to insert according to the replacement method
@@ -223,7 +319,11 @@ void Charizard::replacement(CharizardSolution & invalidSolution, std::vector<int
 
 bool Charizard::replacement(Bin& target, int id)
 {
-
+	// Para cada peso dentro do bin
+	//		subistitiu por peso de id
+	//		
+	//
+	return false;
 }
 
 int Charizard::getBinFilling(Bin bin)
@@ -248,7 +348,6 @@ void Charizard::testFirstFitHeuristic()
 	}
 	firstFitDescendingHeuristic(target, weightsIds);
 	std::cout << target;
-
 }
 
 void Charizard::testMutate()
@@ -312,4 +411,52 @@ void Charizard::testEvaluate()
 		std::cout << i << target.genes[i] << " Filling: " << getBinFilling(target.genes[i]) << std::endl;
 	}
 	std::cout << evaluate(target) << std::endl;
+}
+
+#include <ostream>
+#include <fstream>
+
+void Charizard::testCreateInitialClone()
+{
+	
+	CharizardSolution father, mother, daughter, son;
+	std::vector<int> _w1, _w2;
+	int range = (int)_weights.size();
+	int i = 0;
+	while (i++ < range)
+	{
+		_w1.push_back(i-1);
+		_w2.push_back(range - i);
+	}
+	firstFitDescendingHeuristic(father, _w1);
+	firstFitDescendingHeuristic(mother, _w2);
+	
+	std::ofstream output("parents.txt");
+	if (!output.is_open())
+		std::cerr << "Opening output went wrong."<<std::endl;
+	output << "Father: " << father << std::endl;
+	output << "Mother: " << mother << std::endl;
+	output.close();
+
+	//createInitialClones(father, mother, 7, 9, 15, 21, son, daughter);
+	//std::cout << "Son 1: " << son << std::endl;
+	//std::cout << "Daughter 1: " << daughter << std::endl;
+
+	son.genes.clear();
+	daughter.genes.clear();
+	createInitialClones(father, mother, 0, 4, 15, 21, son, daughter);
+	std::cout << "Son 2: " << son << std::endl;
+	std::cout << "Daughter 2: " << daughter << std::endl;
+
+	son.genes.clear();
+	daughter.genes.clear();
+	createInitialClones(father, mother, 7, 11, 19, 24, son, daughter);
+	std::cout << "Son 3: " << son << std::endl;
+	std::cout << "Daughter 3: " << daughter << std::endl;
+/*
+	son.genes.clear();
+	daughter.genes.clear();
+	createInitialClones(father, mother, 7, 11, 7, 7, son, daughter);
+	std::cout << "Son 4: " << son << std::endl;
+	std::cout << "Daughter 4: " << daughter << std::endl;*/
 }

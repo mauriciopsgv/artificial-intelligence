@@ -29,13 +29,15 @@ public:
 
 	void testEvaluate();
 
+	void testCreateInitialClone();
+
 protected:
 
 	void generateInitialPopulation();
 
 	virtual std::pair<CharizardSolution, CharizardSolution> selectParents();
 
-	virtual CharizardSolution crossover(std::pair<CharizardSolution, CharizardSolution> parents);
+	virtual std::pair<CharizardSolution, CharizardSolution> crossover(std::pair<CharizardSolution, CharizardSolution> parents);
 
 	virtual CharizardSolution mutate(CharizardSolution individual);
 
@@ -63,5 +65,10 @@ protected:
 
 	void replacement(CharizardSolution& invalidSolution, std::vector<int>& unassignedItemsIds);
 
+	bool replacement(Bin& target, int id);
+
+	void updateTotalFitness();
+
 	int getBinFilling(Bin bin);
 };
+
