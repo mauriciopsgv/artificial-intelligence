@@ -21,6 +21,8 @@ public:
 
 	void testFirstFitHeuristic();
 
+	void testGenerateInitialPopulation();;
+
 	void testMutate();
 
 	void testCrossover();
@@ -42,8 +44,6 @@ protected:
 	virtual CharizardSolution mutate(CharizardSolution individual);
 
 	virtual float evaluate(CharizardSolution individual);
-
-	virtual bool algorithmHasConverged();
 
 	int _binCapacity;
 
