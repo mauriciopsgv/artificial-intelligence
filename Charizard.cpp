@@ -8,9 +8,9 @@
 #include <fstream>
 
 #define EVALUATION_CONSTANT 3.0
-#define POPULATIONSIZE 5
-#define NOTIMPROVEDGENERATIONS 30
-#define MUTATION_RATE 0.01
+#define POPULATIONSIZE 40
+#define NOTIMPROVEDGENERATIONS 10
+#define MUTATION_RATE 1.0
 
 std::ostream& operator<<(std::ostream& os, const Bin& obj)
 {
@@ -22,7 +22,6 @@ std::ostream& operator<<(std::ostream& os, const Bin& obj)
 	os << "]";
 	return os;
 }
-
 
 std::ostream& operator<<(std::ostream& os, const CharizardSolution& obj)
 {
@@ -68,9 +67,13 @@ void Charizard::updateTotalFitness()
 
 CharizardSolution Charizard::execute()
 {
+	std::default_random_engine _generator;
+	std::uniform_real_distribution<double> distribution(0.0, 100.0);
+
 	generateInitialPopulation();
 	updateTotalFitness();
 	int genNotImproved = 0;
+	int cont = 0;
 
 	while (genNotImproved < NOTIMPROVEDGENERATIONS)
 	{
@@ -78,8 +81,16 @@ CharizardSolution Charizard::execute()
 		std::vector<std::pair<float, CharizardSolution>> offspring;
 		for (unsigned int i = 0; i < _population.size(); i+=2)
 		{
+			
 			std::pair<CharizardSolution, CharizardSolution> individual = crossover(selectParents());
-			// Mutation comes here
+			
+			if (distribution(_generator) <= MUTATION_RATE)
+				individual.first = mutate(individual.first);
+
+			if (distribution(_generator) <= MUTATION_RATE)
+				individual.second = mutate(individual.second);
+
+
 			offspring.emplace_back(evaluate(individual.first),individual.first);
 			offspring.emplace_back(evaluate(individual.second), individual.second);
 		}
@@ -91,9 +102,11 @@ CharizardSolution Charizard::execute()
 			genNotImproved++;
 		else
 			genNotImproved = 0;
+		cont++;
 	}
 
 	std::make_heap(_population.begin(), _population.end());
+	printMauricioStyle(_population[0].second);
 	return _population[0].second;
 }
 
@@ -120,7 +133,7 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 {
 	// Generate a number between 0 and 1 and find the parent that occupies its position
 	
-	double ratio1 = (double) rand() / (double) (RAND_MAX);
+	double ratio1 = (double)rand() / (double)(RAND_MAX);
 	double ratio2 = (double)rand() / (double)(RAND_MAX);
 
 	double threshold1 = ratio1 * _totalFitness;
@@ -144,7 +157,6 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 			if (foundMother && evaluationPoint > threshold2)
 			{
 				father = i.second;
-
 			}
 			else
 			{
@@ -154,7 +166,9 @@ std::pair<CharizardSolution, CharizardSolution> Charizard::selectParents()
 		}
 		partialFitnessValue += i.first;
 	}
-
+	if (!father.genes.size())
+		// HAS TO BE REVIEWED
+		father = _population[0].second;
 	return std::pair<CharizardSolution, CharizardSolution>(mother,father);
 }
 
@@ -168,14 +182,11 @@ void exchange(int& first, int&second)
 std::set<int> getWeightsInInterval(CharizardSolution solution, int begin, int end)
 {
 	std::set<int> list;
-	std::cout << "Begin: " << begin << "End: " << end << std::endl;
-	std::cout << solution << std::endl;
 	for (int i = begin; i <= end; i++)
 	{
 		for (int weightId : solution.genes[i].weightIds)
 		{
 			list.insert(weightId);
-			std::cout << "put inside set: " << weightId << std::endl;
 		}
 	}
 	return list;
@@ -235,9 +246,6 @@ void Charizard::mergeSecondParent(CharizardSolution& invalidSolution, CharizardS
 		}
 	}
 	std::sort(unassignedItems.begin(), unassignedItems.end());
-	std::cout << invalidSolution << std::endl;
-	for (int i : unassignedItems)
-		std::cout << "unassigned: " << i << std::endl;
 	replacement(invalidSolution, unassignedItems);
 	firstFitDescendingHeuristic(invalidSolution, unassignedItems);
 }
@@ -274,7 +282,6 @@ CharizardSolution Charizard::mutate(CharizardSolution individual)
 {
 	int binToBePopped, range = (int)individual.genes.size();
 	binToBePopped = rand() % range;
-	std::cout << "rand: " << binToBePopped <<std::endl;
 	std::vector<int> weightIds;
 	weightIds = individual.genes[binToBePopped].weightIds;
 
@@ -371,8 +378,8 @@ bool Charizard::replacement(Bin& target, int id, std::vector<int>& unassignedIte
 				currentFullness > originalBinFullness) {
 				unassignedItemsIds.push_back(target.weightIds[i]);
 				unassignedItemsIds.push_back(target.weightIds[j]);
-				target.weightIds.erase(target.weightIds.begin() + i);
 				target.weightIds.erase(target.weightIds.begin() + j);
+				target.weightIds.erase(target.weightIds.begin() + i);
 				target.weightIds.push_back(id);
 				return true;
 			}
@@ -403,7 +410,7 @@ int Charizard::getBinFilling(Bin bin)
 
 void Charizard::printMauricioStyle(CharizardSolution solution)
 {
-	std::cout << "Number of bins:" << solution.genes.size() << std::endl;
+	std::cout << "Number of bins:" << solution.genes.size() << " Fitness: " << evaluate(solution) << std::endl;
 	int i = 0;
 	for (Bin gene : solution.genes)
 	{
@@ -447,9 +454,7 @@ void Charizard::testMutate()
 	}
 	firstFitDescendingHeuristic(target, weightsIds);
 	printMauricioStyle(target);
-	//std::cout << target << evaluate(target);
 	target = mutate(target);
-	//std::cout << target <<evaluate(target);
 	printMauricioStyle(target);
 }
 

@@ -38,6 +38,7 @@ public:
 	void testEvaluate();
 
 protected:
+	
 
 	void generateInitialPopulation();
 

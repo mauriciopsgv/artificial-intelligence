@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <time.h>
 #include "Charizard.h"
 
 void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapacity)
@@ -30,15 +31,33 @@ void loadFromFile(std::string fileName, std::vector<int>& weights, int& binCapac
 	input.close();
 }
 
-
-int main(void)
+void runInstance(std::string instanceFileName)
 {
 	int binCapacity;
 	std::vector<int> weights;
+	loadFromFile(instanceFileName, weights, binCapacity);
+	clock_t begin = clock();
+	Charizard instance(weights, binCapacity);
+	instance.execute();
+	clock_t end = clock();
+	double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+	std::cout << "Ran " << instanceFileName<<", took ";
+	std::cout << elapsed_secs << " second(s) of execution." << std::endl;
 
-	loadFromFile(std::string("Falkenauer_t60_00.txt"),weights,binCapacity);
+}
 
-	Charizard falkenauer_t60_00(weights, binCapacity);
+int main(void)
+{
+	runInstance("Falkenauer_t60_00.txt");
+	runInstance("Falkenauer_t120_01.txt");
+	runInstance("Falkenauer_u120_02.txt");
+	runInstance("Falkenauer_u250_04.txt");
+	runInstance("Falkenauer_u500_05.txt");
+	system("pause");
+}
+
+
+
 	//CharizardSolution bestSolution = falkenauer_t69_00.execute();
 	//falkenauer_t60_00.testFirstFitHeuristic();
 	//falkenauer_t60_00.testEvaluate();
@@ -46,6 +65,3 @@ int main(void)
 	//falkenauer_t60_00.testSelectParents();
 	//falkenauer_t60_00.testGenerateInitialPopulation();
 	//Charizard controlado("controlado.txt");
-	std::cout<< falkenauer_t60_00.execute();
-	system("pause");
-}
